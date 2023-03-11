@@ -1,0 +1,86 @@
+from netmiko import ConnectHandler
+
+# Configuration de la connexion SSH
+device1 = {
+    'device_type': 'cisco_ios',
+    'ip': '192.168.122.101',
+    'username': 'admin',
+    'password': 'password',
+    'port': 22,
+}
+
+device2 = {
+    'device_type': 'cisco_ios',
+    'ip': '192.168.122.102',
+    'username': 'admin',
+    'password': 'password',
+    'port': 22,
+}
+
+device3 = {
+    'device_type': 'cisco_ios',
+    'ip': '192.168.122.103',
+    'username': 'admin',
+    'password': 'password',
+    'port': 22,
+}
+
+device4 = {
+    'device_type': 'cisco_ios',
+    'ip': '192.168.122.104',
+    'username': 'admin',
+    'password': 'password',
+    'port': 22,
+}
+
+# Lecture des configurations à appliquer sur chaque équipement
+with open('routeur_conf.txt', 'r') as f:
+    router_config = f.read()
+
+with open('l3_conf.txt', 'r') as f:
+    l3_switch_config = f.read()
+
+with open('l2_conf.txt', 'r') as f:
+    l2_switch_config = f.read()
+
+# Connexion et configuration des équipements
+for device in [device1, device2, device3, device4]:
+    net_connect = ConnectHandler(**device)
+    hostname = net_connect.find_prompt().replace('#', '')
+    print(f'Connexion réussie à {hostname}')
+
+    # Vérification de l'adresse IP pour appliquer la configuration spécifique à l'équipement
+    if device['ip'] == '192.168.122.101':
+        # Configuration du routeur
+        net_connect.send_config_set(router_config)
+
+    elif device['ip'] in ['192.168.122.102', '192.168.122.103']:
+        # Configuration des switches de niveau 3
+        net_connect.send_config_set(l3_switch_config)
+
+    else:
+        # Configuration des switches de niveau 2
+        net_connect.send_config_set(l2_switch_config)
+
+    # Fermeture de la connexion
+    net_connect.disconnect()
+
+
+interface GigabitEthernet0/0
+ ip address 10.10.0.1 255.255.255.0
+ no shutdown
+
+interface GigabitEthernet0/1
+ ip address 10.20.0.1 255.255.255.0
+ no shutdown
+
+interface Loopback0
+ ip address 1.1.1.1 255.255.255.0
+ ip ospf 1 area 0
+
+
+vlan 10
+ name HR
+vlan 20
+ name Accounting
+
